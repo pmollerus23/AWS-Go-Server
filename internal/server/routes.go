@@ -31,6 +31,8 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	// AWS service endpoints (protected)
 	mux.Handle("GET /api/v1/aws/s3/buckets", authMiddleware(handlers.HandleS3ListBuckets(s.logger, s.awsClients.S3)))
 	mux.Handle("GET /api/v1/aws/dynamodb/tables", authMiddleware(handlers.HandleDynamoDBListTables(s.logger, s.awsClients.DynamoDB)))
+	mux.Handle("GET /api/v1/aws/dynamodb/records", authMiddleware(handlers.HandleDynamoDBListRecords(s.logger, s.awsClients.DynamoDB)))
+	mux.Handle("POST /api/v1/aws/dynamodb/tables", authMiddleware(handlers.HandleDynamoDBUpsertTable(s.logger, s.awsClients.DynamoDB)))
 
 	// Swagger documentation (public)
 	mux.Handle("GET /swagger/", http.StripPrefix("/swagger/", httpSwagger.WrapHandler))

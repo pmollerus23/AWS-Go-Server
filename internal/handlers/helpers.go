@@ -19,6 +19,11 @@ func encode[T any](w http.ResponseWriter, r *http.Request, status int, v T) erro
 	return json.NewEncoder(w).Encode(v)
 }
 
+// decode decodes a request body into the provided type.
+func decode[T any](r *http.Request, v *T) error {
+	return json.NewDecoder(r.Body).Decode(v)
+}
+
 // decodeValid decodes and validates a request body.
 func decodeValid[T Validator](r *http.Request) (T, map[string]string, error) {
 	var v T

@@ -333,6 +333,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/aws/dynamodb/records": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of all records from a DynamoDB table",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "aws"
+                ],
+                "summary": "List DynamoDB records",
+                "responses": {
+                    "200": {
+                        "description": "records and count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to list records",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/aws/dynamodb/tables": {
             "get": {
                 "security": [
@@ -364,6 +402,62 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to list DynamoDB tables",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Insert or update a record in a DynamoDB table",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "aws"
+                ],
+                "summary": "Upsert DynamoDB record",
+                "parameters": [
+                    {
+                        "description": "Record to upsert",
+                        "name": "record",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DynamoDBRecord"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "result metadata",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upsert record",
                         "schema": {
                             "type": "string"
                         }
@@ -734,6 +828,23 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "models.DynamoDBRecord": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Sample Record"
+                },
+                "updated_at": {
+                    "type": "integer",
+                    "example": 1699999999
                 }
             }
         }

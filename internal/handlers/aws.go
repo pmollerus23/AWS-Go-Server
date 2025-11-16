@@ -5,8 +5,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/pmollerus23/go-aws-server/internal/models"
+
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	// "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 // HandleS3ListBuckets returns a handler that lists all S3 buckets.
@@ -81,6 +86,122 @@ func HandleDynamoDBListTables(logger *slog.Logger, dynamoDBClient *dynamodb.Clie
 		}
 
 		if err := encode(w, r, http.StatusOK, response); err != nil {
+			logger.Error("failed to encode response", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+// HandleDynamoDBListRecords returns a handler that lists all records from a DynamoDB table.
+//
+//	@Summary		List DynamoDB records
+//	@Description	Get a list of all records from a DynamoDB table
+//	@Tags			aws
+//	@Produce		json
+//	@Success		200	{object}	map[string]interface{}	"records and count"
+//	@Failure		401	{string}	string					"Unauthorized"
+//	@Failure		500	{string}	string					"Failed to list records"
+//	@Security		BearerAuth
+//	@Router			/api/v1/aws/dynamodb/records [get]
+func HandleDynamoDBListRecords(logger *slog.Logger, dynamoDBClient *dynamodb.Client) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("Listing records from DynamoDB table")
+
+		tableName := "Phil_Go_App_Database"
+		result, err := dynamoDBClient.Scan(context.TODO(), &dynamodb.ScanInput{
+			TableName: aws.String(tableName),
+		})
+
+		if err != nil {
+			logger.Error("Failed to scan DynamoDB table", "error", err, "table", tableName)
+			http.Error(w, "Failed to list records", http.StatusInternalServerError)
+			return
+		}
+
+		// Unmarshal the items into our model
+		var records []models.DynamoDBRecord
+		err = attributevalue.UnmarshalListOfMaps(result.Items, &records)
+		if err != nil {
+			logger.Error("Failed to unmarshal DynamoDB items", "error", err)
+			http.Error(w, "Failed to process records", http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info("Successfully retrieved records", "count", len(records))
+
+		response := map[string]interface{}{
+			"records": records,
+			"count":   len(records),
+		}
+
+		if err := encode(w, r, http.StatusOK, response); err != nil {
+			logger.Error("failed to encode response", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+// HandleDynamoDBUpsertTable returns a handler that inserts or updates a record in a DynamoDB table.
+//
+//	@Summary		Upsert DynamoDB record
+//	@Description	Insert or update a record in a DynamoDB table
+//	@Tags			aws
+//	@Accept			json
+//	@Produce		json
+//	@Param			record	body		models.DynamoDBRecord		true	"Record to upsert"
+//	@Success		201		{object}	map[string]interface{}		"result metadata"
+//	@Failure		400		{string}	string						"Invalid request body"
+//	@Failure		401		{string}	string						"Unauthorized"
+//	@Failure		500		{string}	string						"Failed to upsert record"
+//	@Security		BearerAuth
+//	@Router			/api/v1/aws/dynamodb/tables [post]
+func HandleDynamoDBUpsertTable(logger *slog.Logger, dynamoDBClient *dynamodb.Client) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("Upserting record into DynamoDB table")
+
+		// Decode the JSON payload from the request body
+		var record models.DynamoDBRecord
+		if err := decode(r, &record); err != nil {
+			logger.Error("Failed to decode request body", "error", err)
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		logger.Info("Decoded record", "id", record.ID, "name", record.Name, "updated_at", record.UpdatedAt)
+
+		item, err := attributevalue.MarshalMap(record)
+		if err != nil {
+			logger.Error("Failed to marshal user request record into DynamoDB object", "error", err)
+			http.Error(w, "Failed to marshal user request record into DynamoDB object", http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info("Marshaled item", "item", item)
+
+		tableName := "Phil_Go_App_Database"
+		logger.Info("Putting item to DynamoDB", "table", tableName)
+
+		result, err := dynamoDBClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
+			TableName: aws.String(tableName),
+			Item:      item,
+		})
+
+		if err != nil {
+			logger.Error("Failed to put record in DynamoDB", "error", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info("Successfully put item to DynamoDB", "result", result)
+
+		response := map[string]interface{}{
+			"result_attributes": result.Attributes,
+			"success":           true,
+		}
+
+		if err := encode(w, r, int(http.StatusCreated), response); err != nil {
 			logger.Error("failed to encode response", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return

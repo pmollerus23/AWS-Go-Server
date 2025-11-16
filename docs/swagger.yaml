@@ -139,6 +139,18 @@ definitions:
           type: string
         type: object
     type: object
+  models.DynamoDBRecord:
+    properties:
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Sample Record
+        type: string
+      updated_at:
+        example: 1699999999
+        type: integer
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -361,6 +373,30 @@ paths:
       summary: Sign up a new user
       tags:
       - auth
+  /api/v1/aws/dynamodb/records:
+    get:
+      description: Get a list of all records from a DynamoDB table
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: records and count
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Failed to list records
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List DynamoDB records
+      tags:
+      - aws
   /api/v1/aws/dynamodb/tables:
     get:
       description: Get a list of all DynamoDB tables in the AWS account
@@ -383,6 +419,42 @@ paths:
       security:
       - BearerAuth: []
       summary: List DynamoDB tables
+      tags:
+      - aws
+    post:
+      consumes:
+      - application/json
+      description: Insert or update a record in a DynamoDB table
+      parameters:
+      - description: Record to upsert
+        in: body
+        name: record
+        required: true
+        schema:
+          $ref: '#/definitions/models.DynamoDBRecord'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: result metadata
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Failed to upsert record
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Upsert DynamoDB record
       tags:
       - aws
   /api/v1/aws/s3/buckets:
