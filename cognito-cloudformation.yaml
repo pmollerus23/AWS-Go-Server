@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Cognito User Pool for Go AWS Server'
+
+Parameters:
+  UserPoolName:
+    Type: String
+    Default: go-aws-server-users
+    Description: Name of the Cognito User Pool
+
+  AppClientName:
+    Type: String
+    Default: go-aws-server-client
+    Description: Name of the Cognito App Client
+
+Resources:
+  # Cognito User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref UserPoolName
+      # Allow users to sign in with email
+      UsernameAttributes:
+        - email
+      # Auto-verify email addresses
+      AutoVerifiedAttributes:
+        - email
+      # Password policy
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      # MFA configuration
+      MfaConfiguration: 'OFF'
+      # Account recovery
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      # User attributes
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: name
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+      # Email configuration (using default Cognito email)
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+      # User attribute update settings
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate:
+          - email
+
+  # Cognito User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Ref AppClientName
+      UserPoolId: !Ref UserPool
+      GenerateSecret: true
+      # Auth flows
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      # Token validity
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      # Prevent user enumeration attacks
+      PreventUserExistenceErrors: ENABLED
+      # Read and write attributes
+      ReadAttributes:
+        - email
+        - name
+        - email_verified
+      WriteAttributes:
+        - email
+        - name
+
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolId'
+
+  UserPoolArn:
+    Description: Cognito User Pool ARN
+    Value: !GetAtt UserPool.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UserPoolArn'
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub '${AWS::StackName}-ClientId'
+
+  IssuerURL:
+    Description: JWT Token Issuer URL
+    Value: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'
+    Export:
+      Name: !Sub '${AWS::StackName}-IssuerURL'
+
+  DeploymentInstructions:
+    Description: Next steps to deploy this stack
+    Value: |
+      Deploy with: aws cloudformation create-stack --stack-name go-aws-server-cognito --template-body file://cognito-cloudformation.yaml --region us-east-1
+
+      After deployment, get the Client Secret with:
+      aws cognito-idp describe-user-pool-client --user-pool-id <UserPoolId> --client-id <ClientId> --query 'UserPoolClient.ClientSecret' --output text

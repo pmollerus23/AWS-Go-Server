@@ -1,0 +1,495 @@
+basePath: /
+definitions:
+  auth.CognitoTokens:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      id_token:
+        type: string
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
+  github_com_pmollerus23_go-aws-server_internal_handlers.CreateItemRequest:
+    properties:
+      description:
+        example: Item description
+        maxLength: 500
+        type: string
+      name:
+        example: New Item
+        maxLength: 100
+        minLength: 1
+        type: string
+    type: object
+  github_com_pmollerus23_go-aws-server_internal_handlers.CreateItemResponse:
+    properties:
+      description:
+        example: Item description
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: New Item
+        type: string
+    type: object
+  github_com_pmollerus23_go-aws-server_internal_handlers.Item:
+    properties:
+      description:
+        example: This is a sample item description
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Sample Item
+        type: string
+    type: object
+  handlers.ConfirmForgotPasswordRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+      new_password:
+        type: string
+    type: object
+  handlers.ConfirmForgotPasswordResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.ConfirmSignUpRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    type: object
+  handlers.ConfirmSignUpResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handlers.ForgotPasswordResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.LoginResponse:
+    properties:
+      message:
+        type: string
+      tokens:
+        $ref: '#/definitions/auth.CognitoTokens'
+    type: object
+  handlers.RefreshTokenRequest:
+    properties:
+      email:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  handlers.RefreshTokenResponse:
+    properties:
+      message:
+        type: string
+      tokens:
+        $ref: '#/definitions/auth.CognitoTokens'
+    type: object
+  handlers.SignUpRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.SignUpResponse:
+    properties:
+      email:
+        type: string
+      message:
+        type: string
+    type: object
+  handlers.ValidationError:
+    properties:
+      error:
+        example: validation failed
+        type: string
+      problems:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+    url: https://github.com/pmollerus23/go-aws-server
+  description: A production-grade Go web server with AWS Cognito authentication and
+    AWS service integration.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: AWS Go Server API
+  version: "1.0"
+paths:
+  /api/v1/auth/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Verify user email with confirmation code
+      parameters:
+      - description: Confirmation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ConfirmSignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ConfirmSignUpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Confirm user signup
+      tags:
+      - auth
+  /api/v1/auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Request password reset code via email
+      parameters:
+      - description: Forgot password request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ForgotPasswordResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Forgot password
+      tags:
+      - auth
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and receive JWT tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access and ID tokens using refresh token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh tokens
+      tags:
+      - auth
+  /api/v1/auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password with verification code
+      parameters:
+      - description: Reset password request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ConfirmForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ConfirmForgotPasswordResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Reset password
+      tags:
+      - auth
+  /api/v1/auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account with email and password
+      parameters:
+      - description: Signup request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.SignUpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Sign up a new user
+      tags:
+      - auth
+  /api/v1/aws/dynamodb/tables:
+    get:
+      description: Get a list of all DynamoDB tables in the AWS account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: tables and count
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Failed to list DynamoDB tables
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List DynamoDB tables
+      tags:
+      - aws
+  /api/v1/aws/s3/buckets:
+    get:
+      description: Get a list of all S3 buckets in the AWS account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: buckets and count
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Failed to list S3 buckets
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List S3 buckets
+      tags:
+      - aws
+  /api/v1/items:
+    get:
+      description: Get a list of all items in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_pmollerus23_go-aws-server_internal_handlers.Item'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: List all items
+      tags:
+      - items
+    post:
+      consumes:
+      - application/json
+      description: Create a new item with name and description
+      parameters:
+      - description: Item to create
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_pmollerus23_go-aws-server_internal_handlers.CreateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_pmollerus23_go-aws-server_internal_handlers.CreateItemResponse'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.ValidationError'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Create a new item
+      tags:
+      - items
+  /healthz:
+    get:
+      description: Check if the server is healthy and responding
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Health Check
+      tags:
+      - health
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'JWT Bearer token authentication via AWS Cognito. Use format: "Bearer
+      {access_token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
