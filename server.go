@@ -48,9 +48,9 @@ func run(
 	httpServer := &http.Server{
 		Addr:         net.JoinHostPort(config.Host, config.Port),
 		Handler:      srv,
-		ReadTimeout:  15 * time.Second,  // Time to read request headers and body
-		WriteTimeout: 15 * time.Second,  // Time to write response
-		IdleTimeout:  60 * time.Second,  // Time to keep connection alive when idle
+		ReadTimeout:  15 * time.Second, // Time to read request headers and body
+		WriteTimeout: 15 * time.Second, // Time to write response
+		IdleTimeout:  60 * time.Second, // Time to keep connection alive when idle
 	}
 
 	go func() {
