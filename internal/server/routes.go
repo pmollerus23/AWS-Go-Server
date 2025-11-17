@@ -2,6 +2,8 @@ package server
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/pmollerus23/go-aws-server/internal/handlers"
 	"github.com/pmollerus23/go-aws-server/internal/middleware"
@@ -37,6 +39,32 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	// Swagger documentation (public)
 	mux.Handle("GET /swagger/", http.StripPrefix("/swagger/", httpSwagger.WrapHandler))
 
-	// 404 handler
-	mux.Handle("/", http.NotFoundHandler())
+	// Serve static files from React app (must be last to act as fallback)
+	mux.Handle("/", s.spaHandler())
+}
+
+// spaHandler serves the React SPA from web/dist directory.
+// It handles client-side routing by serving index.html for routes that don't exist.
+func (s *Server) spaHandler() http.Handler {
+	spaDir := "web/dist"
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Build the path to the requested file
+		path := filepath.Join(spaDir, r.URL.Path)
+
+		// Check if file exists
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			// File does not exist, serve index.html for client-side routing
+			http.ServeFile(w, r, filepath.Join(spaDir, "index.html"))
+			return
+		} else if err != nil {
+			// Error checking file
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Serve the requested file
+		http.FileServer(http.Dir(spaDir)).ServeHTTP(w, r)
+	})
 }

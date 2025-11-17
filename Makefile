@@ -1,4 +1,4 @@
-.PHONY: help build run test clean docker-build docker-up docker-down lint fmt vet tidy dev swagger
+.PHONY: help build run test clean docker-build docker-up docker-down lint fmt vet tidy dev swagger frontend-install frontend-dev frontend-build frontend-clean build-all
 
 # Variables
 BINARY_NAME=server
@@ -94,3 +94,26 @@ install-tools: ## Install development tools
 check: fmt vet lint test ## Run all checks (fmt, vet, lint, test)
 
 all: clean build test ## Clean, build, and test
+
+# Frontend targets
+frontend-install: ## Install frontend dependencies
+	@echo "Installing frontend dependencies..."
+	@cd web && npm install
+	@echo "Frontend dependencies installed"
+
+frontend-dev: ## Run frontend development server
+	@echo "Starting frontend development server..."
+	@cd web && npm run dev
+
+frontend-build: ## Build frontend for production
+	@echo "Building frontend..."
+	@cd web && npm run build
+	@echo "Frontend build complete: web/dist/"
+
+frontend-clean: ## Clean frontend build artifacts
+	@echo "Cleaning frontend..."
+	@rm -rf web/dist web/node_modules web/.vite
+	@echo "Frontend cleaned"
+
+build-all: frontend-build build ## Build both frontend and backend
+	@echo "Full build complete"

@@ -16,9 +16,9 @@ type Item struct {
 
 // In-memory store for demo purposes
 var (
-	items     = make(map[int64]Item)
-	itemsMux  sync.RWMutex // Protects items map and nextID
-	nextID    int64 = 1
+	items    = make(map[int64]Item)
+	itemsMux sync.RWMutex // Protects items map and nextID
+	nextID   int64        = 1
 )
 
 // HandleItemsGet returns a handler that retrieves all items.
