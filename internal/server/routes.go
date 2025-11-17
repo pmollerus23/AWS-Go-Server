@@ -30,8 +30,16 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/items", authMiddleware(handlers.HandleItemsGet(s.logger)))
 	mux.Handle("POST /api/v1/items", authMiddleware(handlers.HandleItemsCreate(s.logger)))
 
-	// AWS service endpoints (protected)
+	// AWS S3 service endpoints (protected)
 	mux.Handle("GET /api/v1/aws/s3/buckets", authMiddleware(handlers.HandleS3ListBuckets(s.logger, s.awsClients.S3)))
+	mux.Handle("POST /api/v1/aws/s3/buckets", authMiddleware(handlers.HandleS3CreateBucket(s.logger, s.awsClients.S3)))
+	mux.Handle("DELETE /api/v1/aws/s3/buckets/{bucketName}", authMiddleware(handlers.HandleS3DeleteBucket(s.logger, s.awsClients.S3)))
+	mux.Handle("GET /api/v1/aws/s3/buckets/{bucketName}/objects", authMiddleware(handlers.HandleS3ListObjects(s.logger, s.awsClients.S3)))
+	mux.Handle("POST /api/v1/aws/s3/buckets/{bucketName}/objects", authMiddleware(handlers.HandleS3UploadObject(s.logger, s.awsClients.S3)))
+	mux.Handle("DELETE /api/v1/aws/s3/buckets/{bucketName}/objects/{key...}", authMiddleware(handlers.HandleS3DeleteObject(s.logger, s.awsClients.S3)))
+	mux.Handle("GET /api/v1/aws/s3/buckets/{bucketName}/download/{key...}", authMiddleware(handlers.HandleS3GetObject(s.logger, s.awsClients.S3)))
+
+	// AWS DynamoDB service endpoints (protected)
 	mux.Handle("GET /api/v1/aws/dynamodb/tables", authMiddleware(handlers.HandleDynamoDBListTables(s.logger, s.awsClients.DynamoDB)))
 	mux.Handle("GET /api/v1/aws/dynamodb/records", authMiddleware(handlers.HandleDynamoDBListRecords(s.logger, s.awsClients.DynamoDB)))
 	mux.Handle("POST /api/v1/aws/dynamodb/tables", authMiddleware(handlers.HandleDynamoDBUpsertTable(s.logger, s.awsClients.DynamoDB)))

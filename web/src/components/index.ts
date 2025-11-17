@@ -7,3 +7,7 @@ export * from './DynamoDBRecordForm';
 export * from './DynamoDBRecordsList';
 export * from './S3BucketsList';
 export * from './DynamoDBTablesList';
+export * from './S3BucketCreateForm';
+export * from './S3BucketManager';
+export * from './S3FileUploadForm';
+export * from './S3FilesList';
