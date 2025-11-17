@@ -41,6 +41,17 @@ export const useQuery = <T>(
 
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   const executeQuery = useCallback(async (): Promise<void> => {
     if (!enabled) return;
@@ -67,7 +78,7 @@ export const useQuery = <T>(
       });
 
       retryCountRef.current = 0;
-      onSuccess?.(data);
+      onSuccessRef.current?.(data);
     } catch (err) {
       if (!isMountedRef.current) return;
 
@@ -96,9 +107,9 @@ export const useQuery = <T>(
       });
 
       retryCountRef.current = 0;
-      onError?.(error);
+      onErrorRef.current?.(error);
     }
-  }, [queryFn, enabled, onSuccess, onError, retry, retryDelay]);
+  }, [queryFn, enabled, retry, retryDelay]);
 
   const refetch = useCallback(async (): Promise<void> => {
     retryCountRef.current = 0;
@@ -135,8 +146,9 @@ export const useQuery = <T>(
     return () => clearInterval(intervalId);
   }, [refetchInterval, enabled, executeQuery]);
 
-  // Cleanup on unmount
+  // Track mount/unmount status
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };

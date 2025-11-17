@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { ApiError } from '../types';
 
 interface MutationState<T> {
@@ -35,6 +35,24 @@ export const useMutation = <T, TVariables = void>(
     isError: false,
   });
 
+  // Use refs for callbacks to avoid recreating mutateAsync on every render
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  const onSettledRef = useRef(onSettled);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    onSettledRef.current = onSettled;
+  }, [onSettled]);
+
   const mutateAsync = useCallback(
     async (variables: TVariables): Promise<T> => {
       setState({
@@ -56,8 +74,8 @@ export const useMutation = <T, TVariables = void>(
           isError: false,
         });
 
-        onSuccess?.(data, variables);
-        onSettled?.(data, null, variables);
+        onSuccessRef.current?.(data, variables);
+        onSettledRef.current?.(data, null, variables);
 
         return data;
       } catch (err) {
@@ -75,13 +93,13 @@ export const useMutation = <T, TVariables = void>(
           isError: true,
         });
 
-        onError?.(error, variables);
-        onSettled?.(null, error, variables);
+        onErrorRef.current?.(error, variables);
+        onSettledRef.current?.(null, error, variables);
 
         throw error;
       }
     },
-    [mutationFn, onSuccess, onError, onSettled]
+    [mutationFn]
   );
 
   const mutate = useCallback(

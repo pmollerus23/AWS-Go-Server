@@ -1,28 +1,9 @@
 import { Link } from 'react-router-dom';
-import { useCallback } from 'react';
 import { useAuth } from '../contexts';
-import { useQuery } from '../hooks';
-import { itemsApi } from '../api';
-import type { Item } from '../types';
+import { Card } from '../ui';
 
 export const HomePage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-
-  // Memoize the query function to prevent infinite loops
-  const fetchItems = useCallback(async () => {
-    return itemsApi.getAll();
-  }, []);
-
-  // Fetch items using useQuery hook
-  const {
-    data: items,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery<Item[]>(fetchItems, {
-    enabled: isAuthenticated,
-  });
 
   if (!isAuthenticated) {
     return (
@@ -39,59 +20,56 @@ export const HomePage: React.FC = () => {
   return (
     <div className="home-page">
       <h1>Welcome back, {user?.name || user?.username || user?.email}!</h1>
+      <p>Manage your items and AWS resources from this dashboard.</p>
 
-      <section className="dashboard-section">
-        <h2>Your Items</h2>
+      <div className="page-grid">
+        <Card elevation="medium">
+          <h3>📦 Items Management</h3>
+          <p>Create and manage items in your application.</p>
+          <Link to="/items" className="btn btn-primary">
+            Go to Items
+          </Link>
+        </Card>
 
-        {isLoading && <p>Loading items...</p>}
+        <Card elevation="medium">
+          <h3>☁️ AWS Resources</h3>
+          <p>View and manage your AWS S3 buckets and DynamoDB tables.</p>
+          <Link to="/aws" className="btn btn-primary">
+            Go to AWS Resources
+          </Link>
+        </Card>
 
-        {isError && (
-          <div className="error-container">
-            <p>Error loading items: {error?.message}</p>
-            <button onClick={refetch} className="btn btn-secondary">
-              Retry
-            </button>
-          </div>
-        )}
-
-        {!isLoading && !isError && (
-          <>
-            {items && items.length > 0 ? (
-              <div className="items-list">
-                {items.map((item) => (
-                  <div key={item.id} className="item-card">
-                    <h3>{item.name}</h3>
-                    <p>{item.description}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No items found. Create your first item!</p>
-            )}
-          </>
-        )}
-      </section>
+        <Card elevation="medium">
+          <h3>👤 Profile</h3>
+          <p>View and update your profile information.</p>
+          <Link to="/profile" className="btn btn-primary">
+            Go to Profile
+          </Link>
+        </Card>
+      </div>
 
       <section className="user-info">
-        <h2>User Information</h2>
-        <div className="user-details">
-          <p>
-            <strong>Email:</strong> {user?.email}
-          </p>
-          <p>
-            <strong>Username:</strong> {user?.username}
-          </p>
-          {user?.name && (
+        <h2>Quick Info</h2>
+        <Card>
+          <div className="user-details">
             <p>
-              <strong>Name:</strong> {user.name}
+              <strong>Email:</strong> {user?.email}
             </p>
-          )}
-          {user?.groups && user.groups.length > 0 && (
             <p>
-              <strong>Groups:</strong> {user.groups.join(', ')}
+              <strong>Username:</strong> {user?.username}
             </p>
-          )}
-        </div>
+            {user?.name && (
+              <p>
+                <strong>Name:</strong> {user.name}
+              </p>
+            )}
+            {user?.groups && user.groups.length > 0 && (
+              <p>
+                <strong>Groups:</strong> {user.groups.join(', ')}
+              </p>
+            )}
+          </div>
+        </Card>
       </section>
     </div>
   );

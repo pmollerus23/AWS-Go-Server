@@ -14,8 +14,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: '📊' },
+  { label: 'Items', path: '/items', icon: '📦' },
+  { label: 'AWS Resources', path: '/aws', icon: '☁️' },
   { label: 'Profile', path: '/profile', icon: '👤' },
-  { label: 'Settings', path: '/settings', icon: '⚙️' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
